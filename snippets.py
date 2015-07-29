@@ -1,5 +1,6 @@
 import logging
 import argparse
+import sys
 
 #set the log output file, and the log level
 logging.basicConfig(filename="snippets.log", level=logging.DEBUG)
@@ -29,15 +30,16 @@ def remove(name, snippet):
     logging.error("FIXME: Unimplemented - remove({!r})".format(name))
     
 
-# python snippets.py --type "put" --name "list" --snippet "A sequence of things - created using []"
-
-# python snippets.py -t "put" -n "list" -s "A sequence of things - created using []"
-
 # python snippets.py put list "A sequence of things - created using []"
+
+action ="put"
+form = "list"
+snippet = "A sequence of things - created using []"
+
 
 def main():
     """main function"""
-    loggin.info("Constructing parser")
+    logging.info("Constructing parser")
     parser = argparse.ArgumentParser(description="Store and retrieve snippets of text")
     arguments = parser.parse_args(sys.argv[1:])
 
