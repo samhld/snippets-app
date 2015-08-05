@@ -41,6 +41,13 @@ def main():
     """main function"""
     logging.info("Constructing parser")
     parser = argparse.ArgumentParser(description="Store and retrieve snippets of text")
+    
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    
+    #subparser for put command
+    logging.debug("Constructing put subparser")
+    put_parser = subparsers.add_parser("put", help="Store a snippet")
+    
     arguments = parser.parse_args(sys.argv[1:])
 
 if __name__ == "__main__":
