@@ -17,7 +17,14 @@ def put(name, snippet):
     logging.info("Storing snippet {!r}: {!r}".format(name, snippet))
     cursor = connection.cursor()
     command = "insert into snippets values (%s, %s)"
-    cursor.execute(command, (name, snippet))
+    # cursor.execute(command, (name, snippet))
+    try:
+        command = "insert into snippets values (%s, %s)"
+        cursor.execute(command, (name, snippet))
+    except psycopg2.IntegrityError as e:
+        connection.rollback()
+        command = "update snippets set message=%s where keyword=%s"
+        cursor.execute(command, (snippet, name))
     connection.commit()
     logging.debug("Snippet stored successfully.")
     return name, snippet    
@@ -30,14 +37,28 @@ def get(name):
     """
     
     logging.info("Retrieving snippet {!r}".format(name))
-    cursor = connection.cursor()
-    command = "select message from snippets where keyword = %s"
-    cursor.execute(command, (name,))
-    snippet, = cursor.fetchone()
-    connection.commit()
+    with connection, connection.cursor() as cursor:
+        cursor.execute("select message from snippets where keyword=%s", (name,))
+        row = cursor.fetchone()
     logging.debug("Snippet retrieved successfully.")
     
+    # if not snippet:
+    #     logging.debug("There is no snippet under that keyword")
+        
     return snippet
+
+def cat():
+    logging.info("Retrieving keywords")
+    cursor = connection.cursor()
+    cursor.execute("select keyword from snippets")
+    keywords = cursor.fetchall()
+    connection.commit()
+    
+def strContained(strInput):
+    logging.info("Retrieving snippets")
+    cursor = connection.cursor()
+    cursor.execute("select keyword from snippets where message like '%%s%'", (strInput,))
+    messages = cursor.fetchall()
     
 def remove(name, snippet):
     
@@ -55,7 +76,7 @@ snippet = "A sequence of things - created using []"
 def main():
     """Main function"""
     logging.info("Constructing parser")
-    parser = argparse.ArgumentParser(description="Store and retrieve snippets of text")
+    parser = argparse.ArgumentParser(description="Store and retrieve information to and from 'snippets' table")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -68,6 +89,13 @@ def main():
     logging.debug("Constructing get subparsr")
     get_parser = subparsers.add_parser("get", help="Retrieve a snippet")
     get_parser.add_argument("name", help="The name of the snippet")
+    
+    logging.debug("Constructing catalog subparser")
+    cat_parser = subparsers.add_parser("cat", help="Retrieve list of all keywords")
+    
+    logging.debug("Constructing string finder subparser")
+    str_parser = subparsers.add_parser("contstr", help="Finds string stored within a snippet")
+    
     
     arguments = parser.parse_args(sys.argv[1:])
     
